@@ -94,6 +94,7 @@ ZKeyFrameAnim kfAnim(nullptr);
 #include <string_view>
 #include "tinyxml2.h"
 #include <ctpl_stl.h>
+#include <memory>
 
 const char gBuildHash[] = "";
 
@@ -658,14 +659,20 @@ int HandleExtract(ZFileMode fileMode, ExporterSet* exporterSet, std::atomic<size
 				std::vector<std::string> fileList =
 					Directory::ListFiles(Globals::Instance->inputPath.string());
 
-				const int num_threads = std::thread::hardware_concurrency();
-				ctpl::thread_pool pool(num_threads > 1 ? num_threads / 2 : 1);
-
 				bool parseSuccessful;
 
 				auto start = std::chrono::steady_clock::now();
 				size_t fileListSize = fileList.size();
 				Globals::Instance->singleThreaded = true;
+
+				// The pool's constructor spawns its threads, so build it only for the
+				// multithreaded path. A target without threads (Emscripten without
+				// pthreads) cannot construct it at all, and the single-threaded path
+				// never pushes work to it.
+				const int num_threads = std::thread::hardware_concurrency();
+				std::unique_ptr<ctpl::thread_pool> pool;
+				if (!Globals::Instance->singleThreaded)
+					pool = std::make_unique<ctpl::thread_pool>(num_threads > 1 ? num_threads / 2 : 1);
 
 				for (size_t i = 0; i < fileListSize; i++)
 					Globals::Instance->workerData[i] = new FileWorker();
@@ -687,7 +694,7 @@ int HandleExtract(ZFileMode fileMode, ExporterSet* exporterSet, std::atomic<size
 					else
 					{
 						std::string fileListItem = fileList[i];
-						pool.push([i, fileListSize, fileListItem, fileMode](int) {
+						pool->push([i, fileListSize, fileListItem, fileMode](int) {
 							ExtractFunc(i, fileListSize, fileListItem, fileMode);
 						});
 					}
