@@ -101,10 +101,12 @@ public:
 	size_t GetRawDataSize() const override;
 
 public:
-	uint16_t totalVtxCount;
-	uint16_t limbModifCount;     // Length of limbModifications
-	segptr_t limbModifications;  // SkinLimbModif*
-	segptr_t dlist;              // Gfx*
+	// Initialised: a limb that is not a skin limb never parses this struct, but the
+	// exporter still reads totalVtxCount and dlist from it.
+	uint16_t totalVtxCount = 0;
+	uint16_t limbModifCount = 0;     // Length of limbModifications
+	segptr_t limbModifications = 0;  // SkinLimbModif*
+	segptr_t dlist = 0;              // Gfx*
 
 	std::vector<SkinLimbModif> limbModifications_arr;
 	// ZDisplayList* unk_8_dlist = nullptr;

@@ -44,8 +44,9 @@ protected:
 class RoomShapeImageMultiBgEntry : public ZResource
 {
 public:
-	uint16_t unk_00;
-	uint8_t id;
+	// Only the multi layout has these two; the single layout leaves them at zero.
+	uint16_t unk_00 = 0;
+	uint8_t id = 0;
 	segptr_t source;
 	uint32_t unk_0C;
 	uint32_t tlut;
@@ -141,7 +142,7 @@ public:
 class SetMesh : public ZRoomCommand
 {
 public:
-	uint8_t data;
+	uint8_t data = 0;  // Never parsed; the exporter writes it, so it must not be garbage.
 	uint8_t meshHeaderType;
 	std::shared_ptr<PolygonTypeBase> polyType;
 
